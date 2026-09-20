@@ -8,5 +8,5 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
-  base: './', // Ensures relative assets loading for GitHub Pages deployment
+  base: '/REPP/', // Base URL matching GitHub Pages repo name
 })
