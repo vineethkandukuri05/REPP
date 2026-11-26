@@ -29,5 +29,5 @@ export const config = {
   // Body progress photos: never served statically, only via the authenticated photo route.
   privateUploadDir: path.resolve(process.env.PRIVATE_UPLOAD_DIR || (process.env.VERCEL ? path.join(os.tmpdir(), 'private_uploads') : './private_uploads')),
   // Where BodyVision body photos are analysed: 'ollama' (own server, private) or 'claude' (cloud, needed when hosted without Ollama).
-  bodyVisionAi: (process.env.BODYVISION_AI || 'ollama').toLowerCase(),
+  bodyVisionAi: (process.env.BODYVISION_AI || 'ollama').trim().toLowerCase().startsWith('claude') ? 'claude' : 'ollama',
 };

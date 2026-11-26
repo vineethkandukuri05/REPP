@@ -101,7 +101,7 @@ export async function uploadAndAnalyze(req: Request, res: Response): Promise<voi
     removeFiles(uploaded);
     res.status(503).json({
       error: failureReason.includes('offline')
-        ? 'AI vision is offline. Start Ollama and try again.'
+        ? 'Body photo analysis is not available right now. Please try again later.'
         : "The AI couldn't estimate body fat from these photos. Try a clearer, well-lit, full-torso photo and upload again.",
       aiUnavailable: true
     });

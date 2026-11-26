@@ -12,6 +12,7 @@ export async function getAiHealth(_req: Request, res: Response): Promise<void> {
     provider: aiService.provider,
     textOnline: aiService.provider === 'claude' || health.online,
     configuredCloudModel: aiService.provider === 'claude' ? config.claudeModel : null,
+    bodyVisionProvider: config.bodyVisionAi === 'claude' && aiService.provider === 'claude' ? 'claude' : 'ollama',
     configuredTextModel: config.ollamaTextModel,
     configuredVisionModel: config.ollamaVisionModel,
     pullInstructions: {
