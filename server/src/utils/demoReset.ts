@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../config.js';
 import { localDateString } from './date.js';
+import { evaluateUserBadges } from './badgeEvaluator.js';
 
 const BASELINE_FILE = path.resolve('prisma/demo-baseline.json');
 const SHARED_TABLES = new Set(['Badge', 'FoodItem', 'AiCache']);
@@ -68,7 +69,9 @@ export async function resetDemoAccount(prisma: PrismaClient): Promise<boolean> {
   await prisma.$transaction(async (tx) => {
     await tx.user.deleteMany({ where: { email: config.demoEmail } }); // cascades to all the account's rows
     for (const m of tableOrder()) {
-      const rows = baseline.tables[m.name];
+      let rows = baseline.tables[m.name];
+      // Badge ids differ between databases; badges are re-awarded below instead.
+      if (m.name === 'UserBadge') rows = [];
       if (!rows?.length) continue;
       const dateFields = m.fields.filter(f => f.type === 'DateTime').map(f => f.name);
       const data = rows.map(row => {
@@ -82,6 +85,8 @@ export async function resetDemoAccount(prisma: PrismaClient): Promise<boolean> {
       await delegate(tx as any, m.name).createMany({ data });
     }
   }, { timeout: 60000 });
+  const demo = await prisma.user.findUnique({ where: { email: config.demoEmail } });
+  if (demo) await evaluateUserBadges(prisma, demo.id);
   return true;
 }
 

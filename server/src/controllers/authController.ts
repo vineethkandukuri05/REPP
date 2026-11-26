@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { config } from '../config.js';
 import { serializeProfile } from '../utils/profileSerializer.js';
 import { verifyGoogleIdToken, GoogleAuthError } from '../utils/googleAuth.js';
+import { resetDemoAccount } from '../utils/demoReset.js';
 
 const prisma = new PrismaClient();
 
@@ -128,9 +129,10 @@ export async function login(req: Request, res: Response): Promise<void> {
 
 /** "Try the demo": sign straight into the shared demo account, no password needed. */
 export async function demoLogin(_req: Request, res: Response): Promise<void> {
-  const user = config.demoEmail
-    ? await prisma.user.findUnique({ where: { email: config.demoEmail }, include: { profile: true } })
-    : null;
+  const findDemo = () => prisma.user.findUnique({ where: { email: config.demoEmail }, include: { profile: true } });
+  let user = config.demoEmail ? await findDemo() : null;
+  // First use on a fresh database: build the demo account from the saved clean copy.
+  if (!user && config.demoEmail && await resetDemoAccount(prisma)) user = await findDemo();
   if (!user) {
     res.status(404).json({ error: 'The demo account is not available right now.' });
     return;
