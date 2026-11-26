@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets and user data
+.env
+server/uploads/
+server/private_uploads/
+server/prisma/dev.db.backup*
+server/prisma/dev.db
+server/prisma/dev.db-journal
+.vercel

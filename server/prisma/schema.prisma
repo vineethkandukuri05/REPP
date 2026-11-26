@@ -1,0 +1,399 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?  // null for accounts created with Google sign-in only
+  googleId     String?  @unique // Google account "sub"; links Google sign-in to this user
+  avatarUrl    String?  // profile picture from Google
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile           Profile?
+  mealPlans         MealPlan[]
+  mealLogs          MealLog[]
+  workoutPlans      WorkoutPlan[]
+  workoutSessions   WorkoutSession[]
+  waterLogs         WaterLog[]
+  measurements      BodyMeasurement[]
+  bodyVisionReports BodyVisionReport[]
+  groceryItems      GroceryItem[]
+  adaptiveReviews   AdaptiveReview[]
+  badges            UserBadge[]
+  conversations     ChatConversation[]
+  weeklyPlans       WeeklyPlan[]
+  weeklyFeedback    WeeklyFeedback[]
+}
+
+model Profile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal Metrics
+  name            String @default("")
+  age             Int    @default(25)
+  sex             String @default("Male")
+  height          Float  @default(175)
+  weight          Float  @default(70)
+  targetWeight    Float  @default(68)
+  waist           Float  @default(80)
+  chest           Float  @default(95)
+  arms            Float  @default(35)
+  experienceLevel String @default("Intermediate")
+
+  // Health & Lifestyle
+  healthConditions String @default("[]") // JSON array
+  injuries         String @default("[]") // JSON array
+  activityLevel    String @default("Moderately Active (3-4 days exercise)")
+  dailyRoutine     String @default("")
+  sleepDuration    String @default("7.5 hours")
+  waterIntake      Int    @default(0) // ml consumed today
+  waterTarget      Int    @default(3000) // ml daily target
+  stressLevel      String @default("Moderate")
+
+  // Goals
+  primaryGoal     String @default("Body Recomposition")
+  goalDescription String @default("")
+
+  // Nutrition Preferences
+  dietPreference      String @default("Non-Vegetarian")
+  foodAllergies       String @default("[]") // JSON array
+  dietaryRestrictions String @default("[]") // JSON array
+  preferredCuisines   String @default("[\"Indian North/South\", \"Mediterranean\"]") // JSON array
+  availableFoods      String @default("[]") // JSON array
+  dislikedFoods       String @default("[]") // JSON array
+  dailyBudget         Int    @default(400) // INR per day
+  mealsPerDay         Int    @default(4)
+
+  // Workout Preferences
+  workoutLocation    String @default("Gym Workouts")
+  workoutSplit       String @default("4-Day Upper/Lower Split")
+  availableEquipment String @default("[]") // JSON array
+  workoutDaysPerWeek Int    @default(4)
+  workoutDuration    Int    @default(60) // minutes
+  excludedExercises  String @default("[]") // JSON array
+
+  // Computed Targets
+  dailyCalorieTarget Int @default(2000)
+  proteinTarget      Int @default(140)
+  carbsTarget        Int @default(200)
+  fatsTarget         Int @default(55)
+
+  // Consumed Today
+  caloriesConsumed Int @default(0)
+  proteinConsumed  Int @default(0)
+  carbsConsumed    Int @default(0)
+  fatsConsumed     Int @default(0)
+
+  // Streaks & Consistency
+  streakDays             Int     @default(1)
+  weeklyConsistencyScore Int     @default(85)
+  totalWorkoutsCompleted Int     @default(0)
+  lastActiveDate         String  @default("") // YYYY-MM-DD
+  isOnboarded            Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MealPlan {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String // YYYY-MM-DD
+  dayOfWeek String // Monday, Tuesday...
+  isActive  Boolean       @default(true)
+  meals     PlannedMeal[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId, date])
+}
+
+model PlannedMeal {
+  id               String   @id @default(uuid())
+  mealPlanId       String
+  mealPlan         MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  category         String // Breakfast, Lunch, Evening Snack, Dinner
+  time             String // 08:30 AM
+  name             String
+  rawVsCooked      String   @default("")
+  calories         Int
+  protein          Int
+  carbs            Int
+  fats             Int
+  isCompleted      Boolean  @default(false)
+  prepInstructions String   @default("")
+  ingredients      String   @default("[]") // JSON array of {name, qty, calories}
+  createdAt        DateTime @default(now())
+}
+
+model MealLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       String // YYYY-MM-DD
+  category   String // Breakfast, Lunch, Snack, Dinner
+  name       String
+  calories   Int
+  protein    Int
+  carbs      Int
+  fats       Int
+  source     String // photo, text, manual
+  imagePath  String?
+  items      String   @default("[]") // JSON array of items {name, portion, calories, protein, carbs, fats}
+  confidence String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model WorkoutPlan {
+  id               String     @id @default(uuid())
+  userId           String
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date             String // YYYY-MM-DD
+  dayName          String // "Day 1 - Upper Body Hypertrophy"
+  split            String // "Upper / Lower Split"
+  duration         Int // minutes
+  difficulty       String // Beginner, Intermediate, Advanced
+  targetMuscles    String     @default("[]") // JSON array
+  isCompletedToday Boolean    @default(false)
+  exercises        Exercise[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([userId, date])
+}
+
+model Exercise {
+  id            String      @id @default(uuid())
+  workoutPlanId String
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+  name          String
+  target        String
+  equipment     String
+  sets          Int
+  reps          String
+  rest          String
+  completedSets Int         @default(0)
+  targetWeight  String      @default("0 kg")
+  isPR          Boolean     @default(false)
+  instructions  String      @default("")
+  substitutions String      @default("[]") // JSON array
+}
+
+model WorkoutSession {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date               String // YYYY-MM-DD
+  dayName            String
+  durationMinutes    Int
+  completedExercises String   @default("[]") // JSON array of {name, sets, reps, weight}
+  notes              String?
+  createdAt          DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model WaterLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String // YYYY-MM-DD
+  amountMl  Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model BodyMeasurement {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String // YYYY-MM-DD
+  weight    Float
+  waist     Float?
+  chest     Float?
+  arms      Float?
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model BodyVisionReport {
+  id                     String   @id @default(uuid())
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                   String // Formatted e.g. "Sep 18, 2026"
+  frontPhotoPath         String?
+  sidePhotoPath          String?
+  backPhotoPath          String?
+  estimatedBodyFatRange  String
+  fatDistribution        String
+  visibleTrends          String
+  comparisonWithPrevious String?
+  disclaimer             String
+  createdAt              DateTime @default(now())
+
+  @@index([userId])
+}
+
+model GroceryItem {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  category       String // Protein, Grains, Vegetables, Fruits, Dairy, Snacks, Spices and essentials
+  qty            String
+  estimatedPrice Int      @default(0)
+  isBought       Boolean  @default(false)
+  isCustom       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AdaptiveReview {
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekNumber           Int
+  reviewPeriod         String
+  adherenceScore       Int
+  summaryText          String
+  whatWentWell         String   @default("[]") // JSON array
+  areasForImprovement  String   @default("[]") // JSON array
+  suggestedAdjustments String   @default("{}") // JSON object {calories, protein, workout, habit}
+  nextWeekGoals        String   @default("[]") // JSON array
+  isApplied            Boolean  @default(false)
+  createdAt            DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Badge {
+  id    String      @id @default(uuid())
+  code  String      @unique
+  title String
+  icon  String
+  desc  String
+  users UserBadge[]
+}
+
+model UserBadge {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId    String
+  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model ChatConversation {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  // Set only on the shared demo account: each demo visitor gets a private conversation.
+  visitorId String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([userId, visitorId])
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String // "user" | "ai"
+  text           String
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId])
+}
+
+model AiCache {
+  id         String   @id @default(uuid())
+  promptHash String   @unique
+  model      String
+  response   String
+  createdAt  DateTime @default(now())
+}
+
+model FoodItem {
+  id           String  @id @default(uuid())
+  name         String  @unique
+  hindiName    String?
+  servingSize  String // e.g. "1 medium (40g)", "100g", "1 cup (150g)"
+  calories     Int
+  protein      Float
+  carbs        Float
+  fats         Float
+  isVegetarian Boolean @default(true)
+  category     String // "Bread", "Lentil", "Dairy", "Meat", "Grain", "Snack", "Vegetable"
+}
+
+// Adaptive Plan: one generated plan per week. Values are computed from the user's own logs;
+// "analysis" holds the numbers it was based on so old plans can be reviewed later.
+model WeeklyPlan {
+  id                      String    @id @default(uuid())
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart               String // YYYY-MM-DD (first day of the plan week)
+  weekEnd                 String // YYYY-MM-DD
+  status                  String    @default("draft") // draft | accepted | archived | discarded
+  source                  String    @default("rules") // rules (calculated) — AI only adds an optional summary
+  analysis                String    @default("{}") // JSON: weekly analysis snapshot
+  insights                String    @default("[]") // JSON array
+  recommendations         String    @default("[]") // JSON array, each with status pending|accepted|rejected
+  plan                    String    @default("{}") // JSON: nutrition / workouts / recovery / goals
+  originalPlan            String    @default("{}") // JSON: as generated, for "Reset"
+  originalRecommendations String    @default("[]")
+  customizations          String    @default("{}") // JSON: user overrides
+  aiSummary               String? // AI-written coach note (optional, labelled as AI in the UI)
+  aiSummaryModel          String?
+  acceptedAt              DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, weekStart])
+}
+
+// End-of-week check-in answered by the user (self-reported).
+model WeeklyFeedback {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart         String // YYYY-MM-DD of the week being reviewed
+  energyLevel       Int // 1-5
+  workoutManageable Int // 1-5
+  mealsAffordable   Int // 1-5
+  proteinTargetMet  String // yes | partly | no
+  sleepQuality      Int // 1-5
+  sleepHours        Float?
+  difficulties      String   @default("")
+  improvements      String   @default("")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, weekStart])
+  @@index([userId])
+}

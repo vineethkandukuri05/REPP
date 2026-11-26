@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/*
+ * REPP design tokens: the single source of truth for colour, type, radius and effects.
+ * Components use these through Tailwind utilities (bg-page, text-ink, border-line, bg-brand ...).
+ *
+ * Tailwind's default colour palette, depth effects, blurs and animations are cleared on purpose
+ * so that only these tokens exist.
+ */
+@theme {
+  /* Typography: Arial everywhere */
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: Arial, Helvetica, sans-serif;
+  --font-serif: Arial, Helvetica, sans-serif;
+
+  /* Type scale (body 16px; H4 20 / H3 24 / H2 32 / H1 44) */
+  --text-xs: 0.8125rem;            /* 13px: captions, table meta */
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.9375rem;            /* 15px: dense UI text */
+  --text-sm--line-height: 1.6;
+  --text-base: 1rem;               /* 16px: body */
+  --text-base--line-height: 1.6;
+  --text-lg: 1.25rem;              /* 20px: H4 */
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.5rem;               /* 24px: H3 */
+  --text-xl--line-height: 1.3;
+  --text-2xl: 1.75rem;             /* 28px */
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 2rem;                /* 32px: H2 */
+  --text-3xl--line-height: 1.25;
+  --text-4xl: 2.75rem;             /* 44px: H1 */
+  --text-4xl--line-height: 1.15;
+  --text-5xl: 2.75rem;
+  --text-5xl--line-height: 1.15;
+  --text-6xl: 2.75rem;
+  --text-6xl--line-height: 1.15;
+  --text-7xl: 2.75rem;
+  --text-7xl--line-height: 1.15;
+
+  /* Colour: one brand colour plus neutrals */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #FFFFFF;          /* inputs only */
+  --color-page: #F7F6F3;           /* warm off-white page background */
+  --color-surface: #FAF9F6;        /* cards and panels (flat, bordered) */
+  --color-subtle: #EFEDE8;         /* neutral fills: table headers, tracks, hover */
+  --color-subtle-hover: #E6E3DD;
+  --color-line: #E2E0DB;           /* 1px borders */
+  --color-line-strong: #C9C6BF;
+  --color-ink: #1C1C1C;            /* headings */
+  --color-body: #4A4A4A;           /* body text */
+  --color-muted: #6B6B6B;          /* secondary text (AA on page/surface) */
+  --color-brand: #2F4F3E;          /* dark green */
+  --color-brand-hover: #243D30;
+  --color-on-brand: #FAF9F6;       /* text on brand */
+
+  /* Status (used only for messages and validation) */
+  --color-danger: #A3362B;
+  --color-warning: #8A5A12;
+  --color-success: #2F4F3E;
+
+  /* Data colours for charts and macros: muted, distinct */
+  --color-data-calories: #1C1C1C;
+  --color-data-protein: #2F4F3E;
+  --color-data-carbs: #3D5A80;
+  --color-data-fats: #A06A1E;
+  --color-data-water: #3C6E71;
+  --color-data-sleep: #5B6670;
+
+  /* Radius: square, 0-3px only */
+  --radius-*: initial;
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 3px;
+  --radius-xl: 3px;
+  --radius-2xl: 3px;
+  --radius-3xl: 3px;
+  --radius-4xl: 3px;
+
+  /* Depth effects, blurs and animations are disabled */
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --blur-*: initial;
+  --animate-*: initial;
+}
+
+@layer base {
+  html,
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  html {
+    background-color: var(--color-page);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-page);
+    color: var(--color-body);
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
+    overflow-x: hidden;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-ink);
+    font-weight: 700;
+  }
+
+  ::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
+  /* Visible keyboard focus everywhere, in the brand colour */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  /* Inputs: white field, 1px border, brand focus */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    background-color: var(--color-white);
+  }
+
+  ::selection {
+    background-color: var(--color-brand);
+    color: var(--color-on-brand);
+  }
+
+  /* Only simple colour transitions, 150ms max */
+  a,
+  button {
+    transition-property: color, background-color, border-color, text-decoration-color;
+    transition-duration: 150ms;
+  }
+}
+
+/* Skeleton placeholder blocks (no animation) */
+.skeleton {
+  background-color: var(--color-subtle);
+  border-radius: 2px;
+}
