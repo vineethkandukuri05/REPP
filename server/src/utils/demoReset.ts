@@ -7,12 +7,13 @@
  */
 import { PrismaClient, Prisma } from '@prisma/client';
 import fs from 'fs';
-import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from '../config.js';
 import { localDateString } from './date.js';
 import { evaluateUserBadges } from './badgeEvaluator.js';
 
-const BASELINE_FILE = path.resolve('prisma/demo-baseline.json');
+// Located relative to this file (src/utils or dist/utils), which also lets Vercel bundle it with the function.
+const BASELINE_FILE = fileURLToPath(new URL('../../prisma/demo-baseline.json', import.meta.url));
 const SHARED_TABLES = new Set(['Badge', 'FoodItem', 'AiCache']);
 const DAY_MS = 86400000;
 
@@ -59,7 +60,11 @@ function shiftDateString(value: string, days: number): string {
 
 /** Replace the demo account with the baseline, dates moved forward to today. */
 export async function resetDemoAccount(prisma: PrismaClient): Promise<boolean> {
-  if (!config.demoEmail || !fs.existsSync(BASELINE_FILE)) return false;
+  if (!config.demoEmail) return false;
+  if (!fs.existsSync(BASELINE_FILE)) {
+    console.error(`[demo] clean copy not found at ${BASELINE_FILE}`);
+    return false;
+  }
   const baseline: Baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8'));
   if (baseline.email !== config.demoEmail) return false;
 
