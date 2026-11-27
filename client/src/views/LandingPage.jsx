@@ -173,8 +173,8 @@ export default function LandingPage({ onStartJourney, onExploreApp }) {
             </div>
             <div className="lg:col-span-8 space-y-6 text-base text-body">
               <p>
-                Progress photos are stored in a private folder on REPP&rsquo;s server and can only be viewed while you are signed in to your own account.
-                They are analysed by the AI model running on that server and are not shared or sold.
+                Progress photos are stored privately and can only be viewed while you are signed in to your own account.
+                They are analysed by an AI model only to estimate your body-fat range, and your data is never sold or used for advertising.
               </p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>Delete all progress photos, or your whole account, at any time from Profile and Privacy.</li>

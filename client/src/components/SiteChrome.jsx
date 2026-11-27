@@ -5,6 +5,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ReppLogo from './ReppLogo';
 import { useAuth } from '../context/AuthContext';
+
+// Site root including the GitHub Pages base path (/REPP/ when hosted, / locally).
+const HOME = import.meta.env.BASE_URL;
 import { Menu, X } from './ui/icons';
 
 export function SiteHeader() {
@@ -13,9 +16,9 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   const links = [
-    { href: '/#features', label: 'Features' },
-    { href: '/#how-it-works', label: 'How it works' },
-    { href: '/#privacy', label: 'Privacy and safety' }
+    { href: HOME + '#features', label: 'Features' },
+    { href: HOME + '#how-it-works', label: 'How it works' },
+    { href: HOME + '#privacy', label: 'Privacy and safety' }
   ];
 
   return (
@@ -88,8 +91,8 @@ export function SiteFooter({ compact = false }) {
     {
       title: 'Product',
       links: [
-        { href: '/#features', label: 'Features' },
-        { href: '/#how-it-works', label: 'How it works' },
+        { href: HOME + '#features', label: 'Features' },
+        { href: HOME + '#how-it-works', label: 'How it works' },
         { to: '/login', label: 'Log in' },
         { to: '/login', label: 'Create an account' }
       ]
@@ -97,15 +100,14 @@ export function SiteFooter({ compact = false }) {
     {
       title: 'Company',
       links: [
-        { href: '/#privacy', label: 'Privacy and safety' },
-        // TODO: replace with your real support email address.
-        { href: 'mailto:support@example.com', label: 'Contact (add email)' }
+        { href: HOME + '#privacy', label: 'Privacy and safety' },
+        { href: 'https://github.com/vineethkandukuri05/REPP/issues', label: 'Contact' }
       ]
     },
     {
       title: 'Resources',
       links: [
-        { href: '/#how-it-works', label: 'Getting started' }
+        { href: HOME + '#how-it-works', label: 'Getting started' }
       ]
     },
     {
