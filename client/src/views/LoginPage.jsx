@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { SiteHeader, SiteFooter } from '../components/SiteChrome';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import ForgotPasswordPanel from '../components/ForgotPasswordPanel';
 
 export default function LoginPage() {
   const location = useLocation();
@@ -14,6 +15,8 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [forgot, setForgot] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const { login, register, loginWithGoogle, loginAsDemo } = useAuth();
   const [demoBusy, setDemoBusy] = useState(false);
@@ -120,6 +123,21 @@ export default function LoginPage() {
 
           <div className="lg:col-span-6 lg:col-start-7">
             <div className="bg-surface border border-line rounded-sm p-6 sm:p-8">
+              {forgot ? (
+                <ForgotPasswordPanel
+                  initialEmail={email}
+                  onCancel={() => setForgot(false)}
+                  onDone={(resetEmail) => {
+                    setForgot(false);
+                    setIsLogin(true);
+                    setEmail(resetEmail);
+                    setPassword('');
+                    setErrorMessage('');
+                    setSuccessMessage('Password changed. Log in with your new password.');
+                    showToast('Password changed.', 'success');
+                  }}
+                />
+              ) : (<>
               <div className="flex border-b border-line mb-6" role="tablist" aria-label="Log in or sign up">
                 <button
                   type="button"
@@ -140,6 +158,12 @@ export default function LoginPage() {
                   Sign up
                 </button>
               </div>
+
+              {successMessage && !errorMessage && (
+                <div className="mb-5 p-3 bg-subtle border border-line-strong text-ink text-sm rounded-sm" role="status">
+                  {successMessage}
+                </div>
+              )}
 
               {errorMessage && (
                 <div className="mb-5 p-3 bg-surface border border-danger text-danger text-sm rounded-sm" role="alert">
@@ -179,7 +203,18 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="auth-password" className="block text-sm font-bold text-ink mb-2">Password</label>
+                  <div className="flex items-baseline justify-between mb-2">
+                    <label htmlFor="auth-password" className="block text-sm font-bold text-ink">Password</label>
+                    {isLogin && (
+                      <button
+                        type="button"
+                        onClick={() => { setForgot(true); setErrorMessage(''); setSuccessMessage(''); }}
+                        className="text-sm text-brand underline underline-offset-4 hover:text-brand-hover cursor-pointer"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
                   <input
                     id="auth-password"
                     type="password"
@@ -217,6 +252,7 @@ export default function LoginPage() {
                 busy={googleBusy}
                 text={isLogin ? 'continue_with' : 'signup_with'}
               />
+              </>)}
             </div>
           </div>
         </div>

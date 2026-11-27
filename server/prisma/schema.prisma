@@ -31,6 +31,7 @@ model User {
   adaptiveReviews   AdaptiveReview[]
   badges            UserBadge[]
   conversations     ChatConversation[]
+  passwordResets    PasswordReset[]
   weeklyPlans       WeeklyPlan[]
   weeklyFeedback    WeeklyFeedback[]
 }
@@ -397,5 +398,19 @@ model WeeklyFeedback {
   updatedAt         DateTime @updatedAt
 
   @@unique([userId, weekStart])
+  @@index([userId])
+}
+
+// One-time codes for "Forgot password". Only a hash of the code is stored.
+model PasswordReset {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
   @@index([userId])
 }

@@ -23,6 +23,14 @@ export const config = {
   // Account the "Try the demo" button signs into (shared by all visitors). Empty = button disabled.
   demoEmail: (process.env.DEMO_EMAIL ?? 'demo3m@repp.app').trim().toLowerCase(),
   // Vercel's disk is read-only except the temp folder, so uploads go there (kept only briefly).
+  // Outgoing email (password reset codes). Gmail: SMTP_USER = your address, SMTP_PASS = a Google "app password".
+  smtp: {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '465', 10),
+    user: (process.env.SMTP_USER || '').trim(),
+    pass: (process.env.SMTP_PASS || '').replace(/\s+/g, ''),
+    from: (process.env.MAIL_FROM || '').trim()
+  },
   uploadDir: path.resolve(process.env.UPLOAD_DIR || (process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : './uploads')),
   // OAuth client ID from Google Cloud Console (public, not a secret). Empty = Google sign-in disabled.
   googleClientId: (process.env.GOOGLE_CLIENT_ID || '').trim(),
