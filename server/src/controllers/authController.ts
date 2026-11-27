@@ -8,6 +8,7 @@ import { config } from '../config.js';
 import { serializeProfile } from '../utils/profileSerializer.js';
 import { verifyGoogleIdToken, GoogleAuthError } from '../utils/googleAuth.js';
 import { resetDemoAccount } from '../utils/demoReset.js';
+import { checkSignupEmail } from '../utils/emailCheck.js';
 
 const prisma = new PrismaClient();
 
@@ -51,8 +52,14 @@ function setAuthCookie(res: Response, token: string): void {
 
 export async function register(req: Request, res: Response): Promise<void> {
   const parsed = registerSchema.parse(req.body);
-  const email = parsed.email.toLowerCase();
+  const email = parsed.email.trim().toLowerCase();
   const { password, name } = parsed;
+
+  const emailCheck = await checkSignupEmail(email);
+  if (!emailCheck.ok) {
+    res.status(400).json({ error: emailCheck.error });
+    return;
+  }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
