@@ -6,6 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../api/client';
 import { ChevronLeft } from '../components/ui/icons';
+import PlanSetupProgress from '../components/PlanSetupProgress';
+
+const SETUP_STEPS = ['Saving your profile and targets', 'Building your diet plan', 'Building your workout plan', 'Finishing up'];
+// Typical seconds per step: cloud AI (Claude) vs a local model on a laptop (Ollama).
+const SETUP_SECONDS = { claude: [2, 12, 10, 1], ollama: [2, 90, 75, 1] };
 
 export default function OnboardingView({ onCompleteOnboarding, onCancel }) {
   const navigate = useNavigate();
@@ -14,7 +19,8 @@ export default function OnboardingView({ onCompleteOnboarding, onCancel }) {
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submittingStatus, setSubmittingStatus] = useState('');
+  const [setupStage, setSetupStage] = useState(0);
+  const [setupSeconds, setSetupSeconds] = useState(SETUP_SECONDS.claude);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -130,8 +136,13 @@ export default function OnboardingView({ onCompleteOnboarding, onCancel }) {
       }
     }
 
+    setSetupStage(0);
+    setSetupSeconds(SETUP_SECONDS.claude);
     setIsSubmitting(true);
-    setSubmittingStatus('Calculating metabolic targets (BMR & TDEE)...');
+    // Which AI runs the plans decides how long they take; a quick check sets the estimate.
+    api.get('/ai/health')
+      .then((h) => setSetupSeconds(SETUP_SECONDS[h?.provider === 'ollama' ? 'ollama' : 'claude']))
+      .catch(() => {});
 
     try {
       const numbers = {};
@@ -156,22 +167,26 @@ export default function OnboardingView({ onCompleteOnboarding, onCancel }) {
       await api.post('/profile/onboarding', payload);
 
       // 2. Generate initial diet plan
-      setSubmittingStatus('Generating initial personalized diet plan...');
+      setSetupStage(1);
+      const dietStarted = Date.now();
       try {
         await api.post('/diet/generate', { days: 1 });
       } catch (err) {
         console.warn('Diet generation note:', err);
       }
+      // The workout plan takes about as long as the diet plan did, so use the real timing.
+      const dietSeconds = (Date.now() - dietStarted) / 1000;
+      setSetupSeconds((s) => [s[0], Math.max(1, Math.round(dietSeconds)), Math.max(3, Math.round(dietSeconds * 0.9)), s[3]]);
 
       // 3. Generate initial workout plan
-      setSubmittingStatus('Generating customized workout split & exercises...');
+      setSetupStage(2);
       try {
         await api.post('/workouts/generate', {});
       } catch (err) {
         console.warn('Workout generation note:', err);
       }
 
-      setSubmittingStatus('Finalizing your fitness profile...');
+      setSetupStage(3);
       await refreshUser();
       showToast('Profile configured! Welcome to your REPP Dashboard.', 'success');
 
@@ -225,11 +240,7 @@ export default function OnboardingView({ onCompleteOnboarding, onCancel }) {
       {/* Form Card or Loading Screen */}
       <div className="w-full max-w-3xl bg-surface border border-line rounded-sm p-6 sm:p-10 relative">
         {isSubmitting ? (
-          <div className="py-16 flex flex-col items-center justify-center text-center space-y-4">
-            
-            <h3 className="text-xl font-bold text-ink">Setting up your plan</h3>
-            <p className="text-sm text-muted max-w-md">{submittingStatus}</p>
-          </div>
+          <PlanSetupProgress steps={SETUP_STEPS} stage={setupStage} expected={setupSeconds} />
         ) : (
           <>
             {/* STEP 1: Personal Info */}
